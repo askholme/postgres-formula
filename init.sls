@@ -70,3 +70,13 @@ postgres-db-{{ name }}:
     {% endif %}
 {% endfor%}
 {% endif %}
+{% if 'extensions' in pillar.get('postgres', {}) %}
+{% for name in salt['pillar.get']('postgres:extensions').items() %}
+postgres-extension-{{ name}}:
+  postgres_extension.present:
+    - name: {{ name }}
+    - maintenance_db: {{ db_name }}
+    - require:
+      - postgres_database: postgres-db-{{ db_name }}
+{% endfor %}
+{% endif %}
