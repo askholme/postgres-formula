@@ -1,19 +1,45 @@
 {% from "postgres/map.jinja" import postgres with context %}
 
+python-apt:
+  pkg.installed
+
 postgresql:
-
-  pkg:
-    - installed
+  pkgrepo.managed:
+    - humanname: postgresql
+    - name: deb http://apt.postgresql.org/pub/repos/apt/ sid-pgdg main
+    - key_url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    - file: /etc/apt/sources.list.d/pgdg.list
+    - require:
+      - pkg: python-apt
+    - require_in:
+      - pkg: {{ postgres.pkg }}
+      - pkg: postgresql-contrib-9.3
+  pkg.installed:
     - name: {{ postgres.pkg }}
-
-  service:
-    - running
-    - enable: true
-    - name: {{ postgres.service }}
+  file.managed:
+    - name: /service/postgres/run
+    - source: salt://postgres/postgres-run
+    - mode: 755
+    - makedirs: true
     - require:
       - pkg: {{ postgres.pkg }}
-
       
+      
+postgres_firstrun:
+  file.managed:
+    - name: /service/postgres_firstrun/run
+    - source: salt://postgres/postgres-firstrun
+    - mode: 755
+    - makedirs: true
+postgres_firstrun_finish:    
+  file.managed:
+    - name: /service/postgres_firstrun/finish
+    - source: salt://postgre/postgres-firstrun-finish
+    - mode: 755
+    - makedirs: true
+
+postgresql-contrib-9.3:
+  pkg.installed
 postgresql-server-dev-9.3:
   pkg.installed
   
@@ -35,7 +61,7 @@ pg_hba.conf:
     - require:
       - pkg: {{ postgres.pkg }}
     - watch_in:
-      - service: postgresql
+      - cmd: postgres_service
 {% endif %}
 
 {% if 'users' in pillar.get('postgres', {}) %}
@@ -47,7 +73,7 @@ postgres-user-{{ name }}:
     - password: {{ salt['pillar.get']('postgres:users:' + name + ':password', 'changethis') }}
     - runas: postgres
     - require:
-      - service: {{ postgres.service }}
+      - cmd: postgres_service
 {% endfor%}
 {% endif %}
 
@@ -71,12 +97,12 @@ postgres-db-{{ name }}:
 {% endfor%}
 {% endif %}
 {% if 'extensions' in pillar.get('postgres', {}) %}
-{% for name in salt['pillar.get']('postgres:extensions').items() %}
-postgres-extension-{{ name}}:
+{% for ext in salt['pillar.get']('postgres:extensions') %}
+postgres-extension-{{ ext['name']}}:
   postgres_extension.present:
-    - name: {{ name }}
-    - maintenance_db: {{ db_name }}
+    - name: {{  ext['name'] }}
+    - maintenance_db: {{  ext['db_name'] }}
     - require:
-      - postgres_database: postgres-db-{{ db_name }}
+      - postgres_database: postgres-db-{{ ext['db_name'] }}
 {% endfor %}
 {% endif %}

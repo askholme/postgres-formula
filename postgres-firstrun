@@ -1,0 +1,13 @@
+#!/bin/sh
+# depend on postgres
+sv start postgres || exit 1
+# set salt to live
+echo """ 
+file_client: local
+file_roots:
+  base:
+    - /srv/salt
+id: postgres.live
+""" > /etc/salt/minion
+# call salt
+/usr/bin/salt-call --local state.highstate

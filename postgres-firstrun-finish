@@ -1,0 +1,2 @@
+#!/bin/sh
+touch /service/postgres_firstrun/down
