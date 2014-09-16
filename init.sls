@@ -17,7 +17,7 @@ postgresql:
   pkg.installed:
     - name: {{ postgres.pkg }}
   file.managed:
-    - name: /service/postgres/run
+    - name: /etc/service/postgres/run
     - source: salt://postgres/postgres-run
     - mode: 755
     - makedirs: true
@@ -27,7 +27,7 @@ postgresql:
       
 postgres_firstrun:
   file.managed:
-    - name: /service/postgres_firstrun/run
+    - name: /etc/init.d/postgres
     - source: salt://postgres/postgres-firstrun
     - mode: 755
     - makedirs: true
