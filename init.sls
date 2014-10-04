@@ -27,14 +27,8 @@ postgresql:
       
 postgres_firstrun:
   file.managed:
-    - name: /etc/init.d/postgres
+    - name: /bin/postgres-firstrun
     - source: salt://postgres/postgres-firstrun
-    - mode: 755
-    - makedirs: true
-postgres_firstrun_finish:    
-  file.managed:
-    - name: /service/postgres_firstrun/finish
-    - source: salt://postgre/postgres-firstrun-finish
     - mode: 755
     - makedirs: true
 
@@ -60,8 +54,6 @@ pg_hba.conf:
     - mode: 644
     - require:
       - pkg: {{ postgres.pkg }}
-    - watch_in:
-      - cmd: postgres_service
 {% endif %}
 
 {% if 'users' in pillar.get('postgres', {}) %}
@@ -72,8 +64,6 @@ postgres-user-{{ name }}:
     - createdb: {{ salt['pillar.get']('postgres:users:' + name + ':createdb', False) }}
     - password: {{ salt['pillar.get']('postgres:users:' + name + ':password', 'changethis') }}
     - runas: postgres
-    - require:
-      - cmd: postgres_service
 {% endfor%}
 {% endif %}
 
